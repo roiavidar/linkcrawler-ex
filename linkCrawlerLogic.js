@@ -59,6 +59,7 @@
         }
 
         function saveToLocalStorage() {
+            console.dir(linkTree);
             localStorage.setItem("linkTree", JSON.stringify(linkTree));
         }
 
