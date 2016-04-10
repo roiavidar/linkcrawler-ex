@@ -6,24 +6,24 @@
                 link: undefined,
                 children: []
             },
-            linkRequests = {};
+            linkPendingRequests = {};
 
         function build(link) {
             linkTree.link = link;
-            getHtml(link, linkTree, 0);
+            getHtml(linkTree, 0);
         }
 
-        function getHtml(url, parentLinkObj, linkLevel) {
+        function getHtml(linkObj, linkLevel) {
             if (linkLevel < 5) {
                 var xhr = new XMLHttpRequest();
-                xhr.addEventListener("load", createLinkTree.bind(xhr, url, parentLinkObj, linkLevel = linkLevel+1));
-                xhr.open("GET", url);
+                xhr.addEventListener("load", createLinkNode.bind(xhr, linkObj, linkLevel));
+                xhr.open("GET", linkObj.link);
                 xhr.send();
-                linkRequests[url] = "pending";
+                linkPendingRequests[linkObj.link] = "pending";
             }
         }
 
-        function createLinkTree(currentLink, parentLinkObj, linkLevel) {
+        function createLinkNode(parentLinkObj, linkLevel) {
             var linkRegex = /<a href=("[^#].+")>(.+)<\/a>/g,
                 htmlText = this.responseText,
                 result,
@@ -32,7 +32,7 @@
                 newLinkObj;
 
             if (parentLinkObj.link !== undefined) {
-                delete linkRequests[parentLinkObj.link];
+                delete linkPendingRequests[parentLinkObj.link];
             }
 
             while (result = linkRegex.exec(htmlText)) {
@@ -40,10 +40,10 @@
                 title = result[2];
 
                 newLinkObj = updateLinkTree(parentLinkObj, link, title);
-                getHtml(link, newLinkObj, linkLevel);
+                getHtml(newLinkObj, linkLevel = linkLevel+1);
             }
 
-            if (Object.keys(linkRequests).length === 0) {
+            if (Object.keys(linkPendingRequests).length === 0) {
                 saveToLocalStorage();
             }
         }
